@@ -279,8 +279,10 @@
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.9);
-        border: none;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -293,7 +295,7 @@
       }
 
       .audio-play-btn:hover {
-        background: #fff;
+        background: rgba(255, 255, 255, 0.22);
         transform: scale(1.05);
       }
 
@@ -500,7 +502,7 @@
 
       async function loadChat() {
         try {
-          const response = await fetch("Amal_Chockly.json");
+          const response = await fetch("messages.json");
 
           const data = await response.json();
 
