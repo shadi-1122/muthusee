@@ -129,7 +129,7 @@
       }
 
       .chat-container::-webkit-scrollbar {
-        width: 4px;
+        width: 8px;
       }
 
       .chat-container::-webkit-scrollbar-track {
@@ -240,6 +240,110 @@
         font-size: 12px;
         opacity: 0.6;
         line-height: 1.4;
+      }
+
+      /* ── VOICE MESSAGE ── */
+      .voice-message {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 240px;
+        max-width: 280px;
+      }
+
+      .voice-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        opacity: 0.9;
+      }
+
+      .voice-duration {
+        font-size: 11px;
+        opacity: 0.45;
+        letter-spacing: 0.3px;
+      }
+
+      .audio-player {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
+        padding: 8px 14px;
+      }
+
+      .audio-play-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        padding: 0;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+      }
+
+      .audio-play-btn:hover {
+        background: #fff;
+        transform: scale(1.05);
+      }
+
+      .audio-play-btn svg {
+        width: 13px;
+        height: 13px;
+        fill: #1a1a1a;
+        margin-left: 2px;
+      }
+
+      .audio-play-btn.playing svg.icon-play {
+        display: none;
+      }
+      .audio-play-btn:not(.playing) svg.icon-pause {
+        display: none;
+      }
+
+      .audio-waveform {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 2.5px;
+        height: 28px;
+        cursor: pointer;
+      }
+
+      .audio-bar {
+        flex: 1;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.35);
+        transition: background 0.1s;
+        min-width: 2px;
+      }
+
+      .audio-bar.played {
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .audio-time {
+        font-size: 11px;
+        font-weight: 500;
+        opacity: 0.6;
+        min-width: 32px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.2px;
+      }
+
+      audio {
+        display: none;
       }
 
       /* ── IMAGES ── */
@@ -385,7 +489,7 @@
 
     <div class="chat-container" id="chatContainer"></div>
     <div id="loader">
-      <div class="loader-logo">Instagram</div>
+      <div class="loader-logo">Muthusee</div>
 
       <div class="loader-spinner"></div>
     </div>
@@ -542,6 +646,87 @@
                     <small>${escapeHtml(msg.clipCaption || "")}</small>
                 </div>
             `;
+          }
+
+          // VOICE MESSAGE
+          else if (msg.type === "voice_media") {
+            const uid = "vm_" + Math.random().toString(36).slice(2, 8);
+            let dur = "";
+            const match = (msg.text || "").match(/\((.*?)\)/);
+            if (match) dur = match[1];
+
+            const bars = Array.from({ length: 28 }, (_, i) => {
+              const h = 20 + Math.round(Math.abs(Math.sin(i * 0.7 + 1.2) * 55));
+              return `<div class="audio-bar" style="height:${h}%" data-bar="${i}"></div>`;
+            }).join("");
+
+            content.innerHTML = `
+    <div class="voice-message">
+      <div class="voice-header">🎤 Voice message</div>
+      ${
+        msg.mediaUrl
+          ? `
+        <div class="audio-player" id="player_${uid}">
+          <button class="audio-play-btn" id="btn_${uid}" aria-label="Play">
+            <svg class="icon-play" viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 10 12"><rect x="0" y="0" width="3.5" height="12"/><rect x="6.5" y="0" width="3.5" height="12"/></svg>
+          </button>
+          <div class="audio-waveform" id="wave_${uid}">${bars}</div>
+          <span class="audio-time" id="time_${uid}">0:00</span>
+          <audio id="aud_${uid}" preload="metadata">
+            <source src="${msg.mediaUrl}" type="audio/mp4">
+          </audio>
+        </div>
+      `
+          : `<div class="media">🎤 Voice message</div>`
+      }
+      <div class="voice-duration">${dur}</div>
+    </div>
+  `;
+
+            if (msg.mediaUrl) {
+              const aud = content.querySelector(`#aud_${uid}`);
+              const btn = content.querySelector(`#btn_${uid}`);
+              const waveEl = content.querySelector(`#wave_${uid}`);
+              const timeEl = content.querySelector(`#time_${uid}`);
+              const barsEls = waveEl.querySelectorAll(".audio-bar");
+              const total = barsEls.length;
+
+              const fmt = (s) => {
+                const m = Math.floor(s / 60),
+                  sec = Math.floor(s % 60);
+                return `${m}:${sec.toString().padStart(2, "0")}`;
+              };
+
+              btn.addEventListener("click", () => {
+                aud.paused ? aud.play() : aud.pause();
+              });
+
+              aud.addEventListener("play", () => btn.classList.add("playing"));
+              aud.addEventListener("pause", () =>
+                btn.classList.remove("playing"),
+              );
+              aud.addEventListener("ended", () => {
+                btn.classList.remove("playing");
+                barsEls.forEach((b) => b.classList.remove("played"));
+                timeEl.textContent = "0:00";
+              });
+
+              aud.addEventListener("timeupdate", () => {
+                const pct = aud.duration ? aud.currentTime / aud.duration : 0;
+                const filled = Math.round(pct * total);
+                barsEls.forEach((b, i) =>
+                  b.classList.toggle("played", i < filled),
+                );
+                timeEl.textContent = fmt(aud.currentTime);
+              });
+
+              waveEl.addEventListener("click", (e) => {
+                const rect = waveEl.getBoundingClientRect();
+                const pct = (e.clientX - rect.left) / rect.width;
+                if (aud.duration) aud.currentTime = pct * aud.duration;
+              });
+            }
           }
 
           // CALL
