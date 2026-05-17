@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Instagram Chat Viewer</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        background: #000;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* ── TOPBAR ── */
+      .topbar {
+        background: #000;
+        border-bottom: 0.5px solid #1c1c1c;
+        padding: 12px 16px 0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        flex-shrink: 0;
+      }
+
+      .topbar h1 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #fff;
+        letter-spacing: -0.2px;
+        margin-bottom: 10px;
+      }
+
+      /* ── FILTERS ── */
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      input[type="date"],
+      input[type="text"] {
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 22px;
+        padding: 9px 14px;
+        font-size: 13px;
+        outline: none;
+        transition: background 0.15s;
+        -webkit-appearance: none;
+      }
+
+      input[type="date"]:focus,
+      input[type="text"]:focus {
+        background: #222;
+      }
+
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        opacity: 0.4;
+        cursor: pointer;
+      }
+
+      input::placeholder {
+        color: #555;
+      }
+
+      .searchBox {
+        flex: 1;
+        min-width: 160px;
+      }
+
+      button {
+        background: #0095f6;
+        color: #fff;
+        border: none;
+        border-radius: 22px;
+        padding: 9px 20px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 700;
+        transition: background 0.15s;
+        -webkit-appearance: none;
+      }
+
+      button:hover {
+        background: #1aa3ff;
+      }
+
+      /* Reset button */
+      button:last-of-type {
+        background: #1a1a1a;
+        font-weight: 500;
+      }
+
+      button:last-of-type:hover {
+        background: #2a2a2a;
+      }
+
+      /* ── INFO BAR ── */
+      .info {
+        font-size: 12px;
+        color: #555;
+        padding: 8px 2px 10px;
+        min-height: 30px;
+      }
+
+      /* ── CHAT CONTAINER ── */
+      .chat-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        background: #000;
+      }
+
+      .chat-container::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .chat-container::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .chat-container::-webkit-scrollbar-thumb {
+        background: #2a2a2a;
+        border-radius: 10px;
+      }
+
+      /* ── DATE SEPARATOR ── */
+      .date-separator {
+        text-align: center;
+        color: #555;
+        font-size: 12px;
+        font-weight: 500;
+        margin: 18px 0 10px;
+        letter-spacing: 0.01em;
+      }
+
+      /* ── MESSAGE ROW ── */
+      .message-row {
+        display: flex;
+        width: 100%;
+        margin: 1px 0;
+      }
+
+      .me {
+        justify-content: flex-end;
+      }
+
+      .other {
+        justify-content: flex-start;
+      }
+
+      /* ── BUBBLE ── */
+      .bubble {
+        max-width: 68%;
+        padding: 10px 14px;
+        border-radius: 22px;
+        line-height: 1.45;
+        word-wrap: break-word;
+        font-size: 14.5px;
+        overflow: visible;
+      }
+
+      .me .bubble {
+        background: #3797f0;
+        color: #fff;
+        border-bottom-right-radius: 5px;
+      }
+
+      .other .bubble {
+        background: #262626;
+        color: #fff;
+        border-bottom-left-radius: 5px;
+      }
+
+      /* ── META (TIME) ── */
+      .meta {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.4);
+        margin-top: 5px;
+        text-align: right;
+        padding: 0 2px;
+      }
+
+      .other .bubble .meta {
+        text-align: left;
+      }
+
+      /* ── REPLY ── */
+      .reply {
+        background: rgba(255, 255, 255, 0.08);
+        padding: 7px 10px;
+        border-left: 2.5px solid rgba(255, 255, 255, 0.35);
+        border-radius: 10px;
+        margin-bottom: 8px;
+        font-size: 12.5px;
+        color: rgba(255, 255, 255, 0.75);
+        opacity: 1;
+      }
+
+      .reply strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 2px;
+      }
+
+      /* ── MEDIA ── */
+      .media {
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 16px;
+        padding: 18px 16px;
+        text-align: center;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.6);
+        min-width: 150px;
+        margin-top: 0;
+      }
+
+      .media small {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        opacity: 0.6;
+        line-height: 1.4;
+      }
+
+      /* ── IMAGES ── */
+      img {
+        display: block;
+      }
+
+      .chat-image {
+        width: 100%;
+        max-width: 260px;
+        border-radius: 18px;
+        margin-top: 0;
+        cursor: pointer;
+      }
+
+      .sticker {
+        width: 110px;
+        margin-top: 0;
+      }
+
+      /* ── REACTIONS ── */
+      .reactions {
+        display: flex;
+        gap: 4px;
+        margin-top: 6px;
+        flex-wrap: wrap;
+      }
+
+      .reaction {
+        background: #1e1e1e;
+        border: 0.5px solid #333;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 600px) {
+        .topbar {
+          padding: 10px 12px 0;
+        }
+
+        .bubble {
+          max-width: 82%;
+          font-size: 14px;
+        }
+
+        .chat-container {
+          padding: 8px 10px 16px;
+        }
+
+        .filters {
+          gap: 6px;
+        }
+
+        input[type="date"] {
+          width: 130px;
+          font-size: 12px;
+          padding: 8px 10px;
+        }
+      }
+
+      @media (max-width: 400px) {
+        input[type="date"] {
+          display: none;
+        }
+
+        .bubble {
+          max-width: 88%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <h1>Instagram Chat Viewer</h1>
+
+      <div class="filters">
+        <input type="date" id="startDate" />
+        <input type="date" id="endDate" />
+
+        <input
+          type="text"
+          id="searchInput"
+          class="searchBox"
+          placeholder="Search messages..."
+        />
+
+        <button onclick="applyFilters()">Apply</button>
+        <button onclick="resetFilters()">Reset</button>
+      </div>
+
+      <div class="info" id="info"></div>
+    </div>
+
+    <div class="chat-container" id="chatContainer"></div>
+
+    <script>
+      let allMessages = [];
+      let filteredMessages = [];
+
+      async function loadChat() {
+        const response = await fetch("Amal_Chockly.json");
+        const data = await response.json();
+
+        allMessages = data.messages;
+
+        updateInfo(allMessages);
+
+        renderMessages(allMessages);
+      }
+
+      function formatDate(ts) {
+        const d = new Date(ts);
+
+        return d.toLocaleDateString(undefined, {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      }
+
+      function formatTime(ts) {
+        const d = new Date(ts);
+
+        return d.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      function renderMessages(messages) {
+        const container = document.getElementById("chatContainer");
+        container.innerHTML = "";
+
+        let lastDate = "";
+
+        messages.forEach((msg) => {
+          const currentDate = formatDate(msg.timestampUnix * 1000);
+
+          if (currentDate !== lastDate) {
+            const sep = document.createElement("div");
+            sep.className = "date-separator";
+            sep.innerText = currentDate;
+
+            container.appendChild(sep);
+
+            lastDate = currentDate;
+          }
+
+          const row = document.createElement("div");
+
+          row.className = `message-row ${msg.sender === "me" ? "me" : "other"}`;
+
+          const bubble = document.createElement("div");
+          bubble.className = "bubble";
+
+          // REPLY
+          if (msg.replyTo) {
+            const reply = document.createElement("div");
+            reply.className = "reply";
+
+            reply.innerHTML = `
+                <strong>${msg.replyTo.sender}</strong><br>
+                ${escapeHtml(msg.replyTo.text || "")}
+            `;
+
+            bubble.appendChild(reply);
+          }
+
+          const content = document.createElement("div");
+
+          // TEXT
+          if (msg.type === "text") {
+            content.innerHTML = `
+                <div>${escapeHtml(msg.text || "")}</div>
+            `;
+          }
+
+          // IMAGE
+          else if (msg.type === "media") {
+            if (msg.mediaUrl) {
+              content.innerHTML = `
+                    <img 
+                        src="${msg.mediaUrl}" 
+                        class="chat-image"
+                        onclick="window.open('${msg.mediaUrl}','_blank')"
+                        onerror="this.parentElement.innerHTML='<div class=media>📷 Image expired</div>'"
+                    >
+                `;
+            } else {
+              content.innerHTML = `
+                    <div class="media">📷 Photo</div>
+                `;
+            }
+          }
+
+          // STICKER
+          else if (msg.type === "sticker") {
+            if (msg.mediaUrl) {
+              content.innerHTML = `
+                    <img 
+                        src="${msg.mediaUrl}" 
+                        class="sticker"
+                        onerror="this.parentElement.innerHTML='<div class=media>😊 Sticker</div>'"
+                    >
+                `;
+            } else {
+              content.innerHTML = `
+                    <div class="media">😊 Sticker</div>
+                `;
+            }
+          }
+
+          // REEL
+          else if (msg.type === "reel_share") {
+            content.innerHTML = `
+                <div class="media">
+                    🎬 Reel Shared
+                    <br><br>
+                    <small>${msg.reelOwner || ""}</small>
+                </div>
+            `;
+          }
+
+          // CLIP
+          else if (msg.type === "clip") {
+            content.innerHTML = `
+                <div class="media">
+                    🎥 Clip Shared
+                    <br><br>
+                    <small>${escapeHtml(msg.clipCaption || "")}</small>
+                </div>
+            `;
+          }
+
+          // CALL
+          else if (msg.type === "video_call_event") {
+            content.innerHTML = `
+                <div class="media">
+                    📞 ${
+                      msg.rawData?.video_call_event?.description || "Call Event"
+                    }
+                </div>
+            `;
+          }
+
+          // FALLBACK
+          else {
+            content.innerHTML = `
+                <div class="media">
+                    ${escapeHtml(msg.text || msg.type)}
+                </div>
+            `;
+          }
+
+          bubble.appendChild(content);
+
+          // REACTIONS
+          if (msg.reactions && msg.reactions.length) {
+            const reactions = document.createElement("div");
+            reactions.className = "reactions";
+
+            reactions.innerHTML = msg.reactions
+              .map(
+                (r) => `
+                    <span class="reaction">
+                        ${r.emoji}
+                    </span>
+                `,
+              )
+              .join("");
+
+            bubble.appendChild(reactions);
+          }
+
+          // TIME
+          const meta = document.createElement("div");
+          meta.className = "meta";
+
+          meta.innerText = formatTime(msg.timestampUnix * 1000);
+
+          bubble.appendChild(meta);
+
+          row.appendChild(bubble);
+
+          container.appendChild(row);
+        });
+
+        container.scrollTop = container.scrollHeight;
+      }
+
+      function updateInfo(messages) {
+        const total = allMessages.length;
+        const filtered = messages.length;
+
+        const search = document.getElementById("searchInput").value.trim();
+
+        let text = "";
+
+        // SEARCH ACTIVE
+        if (search) {
+          text = `
+            Showing ${filtered.toLocaleString()} results
+            for "${search}"
+            • Total ${total.toLocaleString()} messages
+        `;
+        }
+
+        // FILTER ACTIVE
+        else if (filtered !== total) {
+          text = `
+            Showing ${filtered.toLocaleString()}
+            of ${total.toLocaleString()} messages
+        `;
+        }
+
+        // DEFAULT
+        else {
+          text = `
+            ${total.toLocaleString()} messages
+        `;
+        }
+
+        document.getElementById("info").innerText = text
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      function applyFilters() {
+        const start = document.getElementById("startDate").value;
+        const end = document.getElementById("endDate").value;
+
+        const search = document
+          .getElementById("searchInput")
+          .value.toLowerCase();
+
+        filteredMessages = allMessages.filter((msg) => {
+          const msgDate = new Date(msg.timestampUnix * 1000);
+
+          let valid = true;
+
+          // START DATE
+          if (start) {
+            const startDate = new Date(start + "T00:00:00");
+
+            valid = valid && msgDate >= startDate;
+          }
+
+          // END DATE
+          if (end) {
+            const endDate = new Date(end + "T23:59:59");
+
+            valid = valid && msgDate <= endDate;
+          }
+
+          // SEARCH
+          if (search) {
+            const searchableText = `
+                ${msg.text || ""}
+                ${msg.clipCaption || ""}
+                ${msg.reelOwner || ""}
+                ${msg.type || ""}
+            `.toLowerCase();
+
+            valid = valid && searchableText.includes(search);
+          }
+
+          return valid;
+        });
+
+        renderMessages(filteredMessages);
+        updateInfo(filteredMessages);
+      }
+
+      function resetFilters() {
+        document.getElementById("startDate").value = "";
+        document.getElementById("endDate").value = "";
+        document.getElementById("searchInput").value = "";
+
+        renderMessages(allMessages);
+        updateInfo(allMessages);
+      }
+
+      function escapeHtml(text) {
+        return text
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      loadChat();
+    </script>
+  </body>
+</html>
