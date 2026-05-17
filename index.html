@@ -303,6 +303,53 @@
         }
       }
 
+      /* ── LOADER ── */
+
+      #loader {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999;
+        gap: 24px;
+      }
+
+      .loader-logo {
+        font-size: 32px;
+        font-weight: 700;
+        background: linear-gradient(
+          45deg,
+          #feda75,
+          #fa7e1e,
+          #d62976,
+          #962fbf,
+          #4f5bd5
+        );
+
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+
+        letter-spacing: -1px;
+      }
+
+      .loader-spinner {
+        width: 42px;
+        height: 42px;
+        border: 3px solid #222;
+        border-top: 3px solid #fff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
       @media (max-width: 400px) {
         input[type="date"] {
           display: none;
@@ -337,20 +384,39 @@
     </div>
 
     <div class="chat-container" id="chatContainer"></div>
+    <div id="loader">
+      <div class="loader-logo">Instagram</div>
+
+      <div class="loader-spinner"></div>
+    </div>
 
     <script>
       let allMessages = [];
       let filteredMessages = [];
 
       async function loadChat() {
-        const response = await fetch("Amal_Chockly.json");
-        const data = await response.json();
+        try {
+          const response = await fetch("Amal_Chockly.json");
 
-        allMessages = data.messages;
+          const data = await response.json();
 
-        updateInfo(allMessages);
+          allMessages = data.messages;
 
-        renderMessages(allMessages);
+          updateInfo(allMessages);
+
+          renderMessages(allMessages);
+        } catch (err) {
+          console.error(err);
+
+          document.getElementById("chatContainer").innerHTML = `
+            <div class="media">
+                Failed to load chat
+            </div>
+        `;
+        } finally {
+          // HIDE LOADER IMMEDIATELY
+          document.getElementById("loader").style.display = "none";
+        }
       }
 
       function formatDate(ts) {
