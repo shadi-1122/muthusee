@@ -314,9 +314,7 @@
         justify-content: center;
         flex-shrink: 0;
         padding: 0;
-        transition:
-          background 0.15s,
-          transform 0.1s;
+        transition: background 0.15s, transform 0.1s;
       }
 
       .audio-play-btn:hover {
@@ -331,12 +329,8 @@
         margin-left: 2px;
       }
 
-      .audio-play-btn.playing svg.icon-play {
-        display: none;
-      }
-      .audio-play-btn:not(.playing) svg.icon-pause {
-        display: none;
-      }
+      .audio-play-btn.playing svg.icon-play { display: none; }
+      .audio-play-btn:not(.playing) svg.icon-pause { display: none; }
 
       .audio-waveform {
         flex: 1;
@@ -369,14 +363,10 @@
         letter-spacing: 0.2px;
       }
 
-      audio {
-        display: none;
-      }
+      audio { display: none; }
 
       /* ── IMAGES ── */
-      img {
-        display: block;
-      }
+      img { display: block; }
 
       .chat-image {
         width: 100%;
@@ -410,24 +400,11 @@
 
       /* ── RESPONSIVE ── */
       @media (max-width: 600px) {
-        .topbar {
-          padding: 10px 12px 0;
-        }
-        .bubble {
-          max-width: 82%;
-          font-size: 14px;
-        }
-        .chat-container {
-          padding: 8px 10px 16px;
-        }
-        .filters {
-          gap: 6px;
-        }
-        input[type="date"] {
-          width: 130px;
-          font-size: 12px;
-          padding: 8px 10px;
-        }
+        .topbar { padding: 10px 12px 0; }
+        .bubble { max-width: 82%; font-size: 14px; }
+        .chat-container { padding: 8px 10px 16px; }
+        .filters { gap: 6px; }
+        input[type="date"] { width: 130px; font-size: 12px; padding: 8px 10px; }
       }
 
       /* ── LOADER ── */
@@ -447,14 +424,7 @@
       .loader-logo {
         font-size: 32px;
         font-weight: 700;
-        background: linear-gradient(
-          45deg,
-          #feda75,
-          #fa7e1e,
-          #d62976,
-          #962fbf,
-          #4f5bd5
-        );
+        background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         letter-spacing: -1px;
@@ -475,34 +445,141 @@
         animation: spin 0.8s linear infinite;
       }
 
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
+      @keyframes spin { to { transform: rotate(360deg); } }
 
       @media (max-width: 400px) {
-        input[type="date"] {
-          display: none;
-        }
-        .bubble {
-          max-width: 88%;
-        }
+        input[type="date"] { display: none; }
+        .bubble { max-width: 88%; }
+      }
+
+      /* ── REEL CARD ── */
+      .reel-card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 220px;
+      }
+
+      .reel-caption {
+        font-size: 12.5px;
+        color: rgba(255,255,255,0.6);
+        font-style: italic;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .reel-owner {
+        font-size: 11.5px;
+        color: rgba(255,255,255,0.45);
+        margin-bottom: 2px;
+      }
+
+      .reel-find-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,0.12);
+        border: none;
+        border-radius: 20px;
+        padding: 7px 14px;
+        color: #fff;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+        align-self: flex-start;
+      }
+
+      .reel-find-btn:hover { background: rgba(255,255,255,0.2); }
+
+      .reel-find-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      .reel-result {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        animation: fadeIn 0.25s ease;
+      }
+
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+      .reel-result-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.07);
+        border-radius: 14px;
+        padding: 10px 12px;
+        text-decoration: none;
+        color: #fff;
+        transition: background 0.15s;
+      }
+
+      .reel-result-link:hover { background: rgba(255,255,255,0.13); }
+
+      .reel-result-thumb {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #1a1a1a;
+      }
+
+      .reel-result-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .reel-result-title {
+        font-size: 12.5px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .reel-result-url {
+        font-size: 11px;
+        color: #0095f6;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .reel-result-snippet {
+        font-size: 11.5px;
+        color: rgba(255,255,255,0.5);
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .reel-not-found {
+        font-size: 12px;
+        color: rgba(255,255,255,0.4);
+        font-style: italic;
       }
     </style>
   </head>
   <body>
+
     <div class="topbar">
       <h1>Muthusee Chat Viewer</h1>
       <div class="filters">
         <input type="date" id="startDate" />
         <input type="date" id="endDate" />
-        <input
-          type="text"
-          id="searchInput"
-          class="searchBox"
-          placeholder="Search messages..."
-        />
+        <input type="text" id="searchInput" class="searchBox" placeholder="Search messages..." />
         <button onclick="applyFilters()">Apply</button>
         <button class="btn-reset" onclick="resetFilters()">Reset</button>
       </div>
@@ -529,26 +606,23 @@
          LOAD
       ───────────────────────────────────────── */
       async function loadChat() {
-        const loader = document.getElementById("loader");
+        const loader       = document.getElementById("loader");
         const loaderStatus = document.getElementById("loaderStatus");
 
         try {
           loaderStatus.textContent = "Fetching data…";
-          const response = await fetch(
-            "https://ik.imagekit.io/shadick/messages_minified.json",
-          );
+          const response = await fetch("https://ik.imagekit.io/shadick/messages_minified.json");
           loaderStatus.textContent = "Parsing messages…";
           const data = await response.json();
           allMessages = data.messages;
 
           // Hide loader, then render in background
           loader.style.opacity = "0";
-          setTimeout(() => {
-            loader.style.display = "none";
-          }, 300);
+          setTimeout(() => { loader.style.display = "none"; }, 300);
 
           updateInfoText(allMessages.length, allMessages.length, "");
           await renderChunked(allMessages, true);
+
         } catch (err) {
           console.error(err);
           document.getElementById("chatContainer").innerHTML =
@@ -566,17 +640,17 @@
 
       function renderChunked(messages, scrollToBottom = false) {
         return new Promise((resolve) => {
-          const container = document.getElementById("chatContainer");
+          const container   = document.getElementById("chatContainer");
           const progressWrap = document.getElementById("progressWrap");
-          const progressBar = document.getElementById("progressBar");
+          const progressBar  = document.getElementById("progressBar");
 
           container.innerHTML = "";
           progressWrap.classList.add("visible");
           progressBar.style.width = "0%";
 
-          const total = messages.length;
-          let index = 0;
-          let lastDate = "";
+          const total   = messages.length;
+          let   index   = 0;
+          let   lastDate = "";
 
           if (total === 0) {
             progressWrap.classList.remove("visible");
@@ -587,7 +661,7 @@
           function processChunk() {
             // Use a DocumentFragment — one DOM insertion per chunk
             const frag = document.createDocumentFragment();
-            const end = Math.min(index + CHUNK_SIZE, total);
+            const end  = Math.min(index + CHUNK_SIZE, total);
 
             for (; index < end; index++) {
               const msg = messages[index];
@@ -683,6 +757,7 @@
           const p = document.createElement("div");
           p.textContent = msg.text || "";
           div.appendChild(p);
+
         } else if (msg.type === "media") {
           if (msg.mediaUrl) {
             const img = document.createElement("img");
@@ -700,6 +775,7 @@
           } else {
             div.appendChild(makeMedia("📷 Photo"));
           }
+
         } else if (msg.type === "sticker") {
           if (msg.mediaUrl) {
             const img = document.createElement("img");
@@ -716,28 +792,30 @@
           } else {
             div.appendChild(makeMedia("😊 Sticker"));
           }
+
         } else if (msg.type === "reel_share") {
-          const m = makeMedia("🎬 Reel Shared");
-          if (msg.reelOwner) {
-            const s = document.createElement("small");
-            s.textContent = msg.reelOwner;
-            m.appendChild(s);
-          }
-          div.appendChild(m);
+          div.appendChild(buildReelCard({
+            icon: "🎬",
+            label: "Reel Shared",
+            caption: msg.reelCaption || msg.text || "",
+            owner: msg.reelOwner || "",
+          }));
+
         } else if (msg.type === "clip") {
-          const m = makeMedia("🎥 Clip Shared");
-          if (msg.clipCaption) {
-            const s = document.createElement("small");
-            s.textContent = msg.clipCaption;
-            m.appendChild(s);
-          }
-          div.appendChild(m);
+          div.appendChild(buildReelCard({
+            icon: "🎥",
+            label: "Clip Shared",
+            caption: msg.clipCaption || msg.text || "",
+            owner: "",
+          }));
+
         } else if (msg.type === "voice_media") {
           div.appendChild(buildVoicePlayer(msg));
+
         } else if (msg.type === "video_call_event") {
-          const desc =
-            msg.rawData?.video_call_event?.description || "Call Event";
+          const desc = msg.rawData?.video_call_event?.description || "Call Event";
           div.appendChild(makeMedia("📞 " + desc));
+
         } else {
           div.appendChild(makeMedia(msg.text || msg.type));
         }
@@ -814,15 +892,12 @@
 
           // Wire up events
           const fmt = (s) => {
-            const m = Math.floor(s / 60),
-              sec = Math.floor(s % 60);
+            const m = Math.floor(s / 60), sec = Math.floor(s % 60);
             return `${m}:${sec.toString().padStart(2, "0")}`;
           };
 
-          btn.addEventListener("click", () => {
-            aud.paused ? aud.play() : aud.pause();
-          });
-          aud.addEventListener("play", () => btn.classList.add("playing"));
+          btn.addEventListener("click", () => { aud.paused ? aud.play() : aud.pause(); });
+          aud.addEventListener("play",  () => btn.classList.add("playing"));
           aud.addEventListener("pause", () => btn.classList.remove("playing"));
           aud.addEventListener("ended", () => {
             btn.classList.remove("playing");
@@ -830,16 +905,17 @@
             timeEl.textContent = "0:00";
           });
           aud.addEventListener("timeupdate", () => {
-            const pct = aud.duration ? aud.currentTime / aud.duration : 0;
+            const pct    = aud.duration ? aud.currentTime / aud.duration : 0;
             const filled = Math.round(pct * barsEls.length);
             barsEls.forEach((b, i) => b.classList.toggle("played", i < filled));
             timeEl.textContent = fmt(aud.currentTime);
           });
           wave.addEventListener("click", (e) => {
             const rect = wave.getBoundingClientRect();
-            const pct = (e.clientX - rect.left) / rect.width;
+            const pct  = (e.clientX - rect.left) / rect.width;
             if (aud.duration) aud.currentTime = pct * aud.duration;
           });
+
         } else {
           wrapper.appendChild(makeMedia("🎤 Voice message"));
         }
@@ -866,18 +942,12 @@
 
       function formatDate(ts) {
         return new Date(ts).toLocaleDateString(undefined, {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
+          weekday: "long", year: "numeric", month: "long", day: "numeric",
         });
       }
 
       function formatTime(ts) {
-        return new Date(ts).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       }
 
       function updateInfoText(shown, total, search) {
@@ -895,30 +965,20 @@
          FILTERS
       ───────────────────────────────────────── */
       function applyFilters() {
-        const start = document.getElementById("startDate").value;
-        const end = document.getElementById("endDate").value;
-        const search = document
-          .getElementById("searchInput")
-          .value.toLowerCase()
-          .trim();
+        const start  = document.getElementById("startDate").value;
+        const end    = document.getElementById("endDate").value;
+        const search = document.getElementById("searchInput").value.toLowerCase().trim();
 
         const filtered = allMessages.filter((msg) => {
           const msgDate = new Date(msg.timestampUnix * 1000);
           let valid = true;
 
           if (start) valid = valid && msgDate >= new Date(start + "T00:00:00");
-          if (end) valid = valid && msgDate <= new Date(end + "T23:59:59");
+          if (end)   valid = valid && msgDate <= new Date(end   + "T23:59:59");
 
           if (search) {
-            const haystack = [
-              msg.text,
-              msg.clipCaption,
-              msg.reelOwner,
-              msg.type,
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
+            const haystack = [msg.text, msg.clipCaption, msg.reelOwner, msg.type]
+              .filter(Boolean).join(" ").toLowerCase();
             valid = valid && haystack.includes(search);
           }
 
@@ -930,11 +990,83 @@
       }
 
       function resetFilters() {
-        document.getElementById("startDate").value = "";
-        document.getElementById("endDate").value = "";
+        document.getElementById("startDate").value  = "";
+        document.getElementById("endDate").value    = "";
         document.getElementById("searchInput").value = "";
         updateInfoText(allMessages.length, allMessages.length, "");
         renderChunked(allMessages, true);
+      }
+
+      /* ─────────────────────────────────────────
+         REEL CARD — shown for reel_share / clip
+      ───────────────────────────────────────── */
+      function buildReelCard({ icon, label, caption, owner }) {
+        const card = document.createElement("div");
+        card.className = "reel-card";
+
+        // Owner
+        if (owner) {
+          const ownerEl = document.createElement("div");
+          ownerEl.className = "reel-owner";
+          ownerEl.textContent = "👤 " + owner;
+          card.appendChild(ownerEl);
+        }
+
+        // Caption preview
+        if (caption) {
+          const cap = document.createElement("div");
+          cap.className = "reel-caption";
+          cap.textContent = caption;
+          card.appendChild(cap);
+        }
+
+        // Header row
+        const header = document.createElement("div");
+        header.style.cssText = "font-size:13px;font-weight:600;opacity:0.85;";
+        header.textContent = icon + " " + label;
+        card.appendChild(header);
+
+        // Result container (populated after search)
+        const resultSlot = document.createElement("div");
+        card.appendChild(resultSlot);
+
+        // "Find Reel" button — only show if there's a caption to search
+        const query = (caption || owner || "").trim();
+        if (query) {
+          const btn = document.createElement("button");
+          btn.className = "reel-find-btn";
+          btn.innerHTML = `<span class="btn-icon">🔍 Find Reel</span>`;
+          btn.onclick = () => findReel(query, btn, resultSlot);
+          card.appendChild(btn);
+        }
+
+        return card;
+      }
+
+      /* ─────────────────────────────────────────
+         FIND REEL
+         Opens Reels Finder (Google CSE cx=e500c3a7a523b49df)
+         with the caption pre-filled via the URL hash.
+         The CSE widget reads #gsc.q= to auto-trigger search.
+      ───────────────────────────────────────── */
+      function findReel(query, btn, slot) {
+        // Build the Reels Finder URL with caption as the pre-filled search query.
+        // Google CSE widget picks up #gsc.q= and auto-searches on page load.
+        const encoded = encodeURIComponent(query);
+        const url = `https://reelsfinder.satishyadav.com/#gsc.q=${encoded}&gsc.tab=0`;
+        window.open(url, "_blank", "noopener,noreferrer");
+
+        // Show a soft "opened" confirmation under the button
+        slot.innerHTML = "";
+        const note = document.createElement("div");
+        note.className = "reel-not-found";
+        note.style.color = "rgba(255,255,255,0.5)";
+        note.style.fontStyle = "normal";
+        note.textContent = "🔗 Opened Reels Finder — results shown there";
+        slot.appendChild(note);
+
+        // Change button to "Search again"
+        btn.querySelector(".btn-icon").textContent = "🔍 Search again";
       }
 
       /* ─────────────────────────────────────────
