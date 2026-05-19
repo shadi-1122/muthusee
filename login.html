@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Muthusee — Sign In</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap");
+
+      :root {
+        --ig-grad: linear-gradient(
+          45deg,
+          #f09433 0%,
+          #e6683c 25%,
+          #dc2743 50%,
+          #cc2366 75%,
+          #bc1888 100%
+        );
+        --bg: #000;
+        --surface: #121212;
+        --border: #2a2a2a;
+        --text: #fff;
+        --muted: #a8a8a8;
+        --blue: #0095f6;
+        --blue-dark: #0074cc;
+        --error: #ed4956;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* ── ANIMATED BACKGROUND GRADIENT ── */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: -50%;
+        background: conic-gradient(
+          from 0deg at 30% 40%,
+          #f0943315 0deg,
+          transparent 60deg,
+          #dc274315 120deg,
+          transparent 180deg,
+          #bc188815 240deg,
+          transparent 300deg,
+          #f0943315 360deg
+        );
+        animation: rotateGrad 18s linear infinite;
+        z-index: 0;
+      }
+
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(
+            ellipse at 70% 20%,
+            rgba(220, 39, 67, 0.08) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse at 20% 80%,
+            rgba(240, 148, 51, 0.06) 0%,
+            transparent 55%
+          );
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      @keyframes rotateGrad {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ── CARD ── */
+      .card {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 360px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 40px 36px 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      @keyframes cardIn {
+        from {
+          opacity: 0;
+          transform: translateY(24px) scale(0.97);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      /* ── LOGO ── */
+      .logo {
+        font-family: "Grand Hotel", cursive;
+        font-size: 46px;
+        background: var(--ig-grad);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 0.5px;
+        margin-bottom: 28px;
+        line-height: 1;
+        user-select: none;
+      }
+
+      /* ── FORM ── */
+      .form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .input-wrap {
+        position: relative;
+        width: 100%;
+      }
+
+      .input-wrap input {
+        width: 100%;
+        background: #1a1a1a;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 13px 44px 13px 12px;
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+        -webkit-appearance: none;
+      }
+
+      .input-wrap input::placeholder {
+        color: #666;
+        font-size: 13px;
+      }
+
+      .input-wrap input:focus {
+        border-color: #555;
+        background: #1e1e1e;
+      }
+
+      .input-wrap input.error {
+        border-color: var(--error);
+      }
+
+      /* eye toggle */
+      .eye-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--muted);
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: "DM Sans", sans-serif;
+        transition: color 0.15s;
+      }
+
+      .eye-btn:hover {
+        color: var(--text);
+      }
+
+      /* ── LOGIN BUTTON ── */
+      .btn-login {
+        width: 100%;
+        margin-top: 8px;
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        background: var(--blue);
+        color: #fff;
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          opacity 0.15s,
+          transform 0.1s;
+        letter-spacing: 0.1px;
+      }
+
+      .btn-login:hover {
+        background: var(--blue-dark);
+      }
+      .btn-login:active {
+        transform: scale(0.98);
+      }
+
+      .btn-login:disabled {
+        opacity: 0.5;
+        cursor: default;
+        transform: none;
+      }
+
+      /* loading spinner inside button */
+      .btn-login .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ── OR DIVIDER ── */
+      .divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        margin: 20px 0 16px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 1px;
+      }
+
+      .divider::before,
+      .divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      /* ── ERROR MESSAGE ── */
+      .error-msg {
+        display: none;
+        background: rgba(237, 73, 86, 0.1);
+        border: 1px solid rgba(237, 73, 86, 0.25);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: var(--error);
+        width: 100%;
+        text-align: center;
+        animation: shake 0.35s ease;
+      }
+
+      .error-msg.visible {
+        display: block;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        20% {
+          transform: translateX(-6px);
+        }
+        40% {
+          transform: translateX(6px);
+        }
+        60% {
+          transform: translateX(-4px);
+        }
+        80% {
+          transform: translateX(4px);
+        }
+      }
+
+      /* ── INFO (session expired etc) ── */
+      .info-msg {
+        display: none;
+        background: rgba(0, 149, 246, 0.1);
+        border: 1px solid rgba(0, 149, 246, 0.2);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: var(--blue);
+        width: 100%;
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
+      .info-msg.visible {
+        display: block;
+      }
+
+      /* ── FOOTER NOTE ── */
+      .footer-note {
+        position: relative;
+        z-index: 1;
+        margin-top: 16px;
+        font-size: 12px;
+        color: #444;
+        text-align: center;
+        letter-spacing: 0.2px;
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 400px) {
+        .card {
+          padding: 32px 24px 28px;
+          border-radius: 0;
+          border-left: none;
+          border-right: none;
+        }
+        .logo {
+          font-size: 40px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="logo">Muthusee</div>
+
+      <div class="info-msg" id="infoMsg"></div>
+      <div class="error-msg" id="errorMsg"></div>
+
+      <div class="form">
+        <div class="input-wrap">
+          <input
+            type="text"
+            id="username"
+            placeholder="Username"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+          />
+        </div>
+
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            autocomplete="current-password"
+          />
+          <button class="eye-btn" id="eyeBtn" type="button" tabindex="-1">
+            Show
+          </button>
+        </div>
+
+        <button class="btn-login" id="loginBtn" onclick="doLogin()">
+          Log in
+        </button>
+      </div>
+
+      <div class="divider">OR</div>
+
+      <div
+        style="
+          font-size: 13px;
+          color: var(--muted);
+          text-align: center;
+          line-height: 1.6;
+        "
+      >
+        This is a private viewer.<br />Contact the owner for access.
+      </div>
+    </div>
+
+    <div class="footer-note">© Muthusee Chat Viewer</div>
+
+    <script>
+      /* ═══════════════════════════════════════════
+       AUTH CONFIG
+    ═══════════════════════════════════════════ */
+      const USERS_URL = "users.json";
+      const SESSION_KEY = "muthusee_session";
+      const INACTIVE_DAYS = 3;
+      const INDEX_PAGE = "index.html";
+
+      /* ═══════════════════════════════════════════
+       CHECK: if already logged in → go to index
+    ═══════════════════════════════════════════ */
+      (function checkAlreadyLoggedIn() {
+        const session = getSession();
+        if (session && isSessionValid(session)) {
+          window.location.replace(INDEX_PAGE);
+        }
+      })();
+
+      /* ═══════════════════════════════════════════
+       SHOW INFO IF REDIRECTED WITH REASON
+    ═══════════════════════════════════════════ */
+      (function checkReason() {
+        const params = new URLSearchParams(window.location.search);
+        const reason = params.get("reason");
+        const infoEl = document.getElementById("infoMsg");
+        if (reason === "inactive") {
+          infoEl.textContent = "⏱ Session expired after 3 days of inactivity.";
+          infoEl.classList.add("visible");
+        } else if (reason === "pwchange") {
+          infoEl.textContent = "🔑 Password changed. Please log in again.";
+          infoEl.classList.add("visible");
+        } else if (reason === "unauth") {
+          infoEl.textContent = "🔒 Please log in to continue.";
+          infoEl.classList.add("visible");
+        }
+      })();
+
+      /* ═══════════════════════════════════════════
+       SESSION HELPERS
+    ═══════════════════════════════════════════ */
+      function getSession() {
+        try {
+          return JSON.parse(localStorage.getItem(SESSION_KEY));
+        } catch {
+          return null;
+        }
+      }
+
+      function isSessionValid(session) {
+        if (!session || !session.username || !session.lastActive) return false;
+        const inactiveSince = Date.now() - session.lastActive;
+        const maxInactive = INACTIVE_DAYS * 24 * 60 * 60 * 1000;
+        return inactiveSince < maxInactive;
+      }
+
+      /* ═══════════════════════════════════════════
+       EYE TOGGLE
+    ═══════════════════════════════════════════ */
+      const eyeBtn = document.getElementById("eyeBtn");
+      const pwInput = document.getElementById("password");
+
+      eyeBtn.addEventListener("click", () => {
+        const isPass = pwInput.type === "password";
+        pwInput.type = isPass ? "text" : "password";
+        eyeBtn.textContent = isPass ? "Hide" : "Show";
+      });
+
+      /* ═══════════════════════════════════════════
+       ENTER KEY
+    ═══════════════════════════════════════════ */
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doLogin();
+      });
+
+      /* ═══════════════════════════════════════════
+       LOGIN
+    ═══════════════════════════════════════════ */
+      async function doLogin() {
+        const btn = document.getElementById("loginBtn");
+        const errorEl = document.getElementById("errorMsg");
+        const usernameVal = document.getElementById("username").value.trim();
+        const passwordVal = document.getElementById("password").value;
+
+        // Clear previous errors
+        errorEl.classList.remove("visible");
+        document.getElementById("username").classList.remove("error");
+        document.getElementById("password").classList.remove("error");
+
+        if (!usernameVal || !passwordVal) {
+          showError("Please enter your username and password.");
+          return;
+        }
+
+        // Show loading
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner"></span>Signing in…`;
+
+        try {
+          // Load users from JSON
+          const res = await fetch(USERS_URL + "?_=" + Date.now());
+          const data = await res.json();
+          const users = data.users || [];
+
+          // Find matching user (case-insensitive username)
+          const user = users.find(
+            (u) => u.username.toLowerCase() === usernameVal.toLowerCase(),
+          );
+
+          if (!user || user.password !== passwordVal) {
+            showError("Incorrect username or password.");
+            document.getElementById("username").classList.add("error");
+            document.getElementById("password").classList.add("error");
+            btn.disabled = false;
+            btn.textContent = "Log in";
+            return;
+          }
+
+          // Create session
+          const session = {
+            username: user.username,
+            displayName: user.displayName || user.username,
+            lastActive: Date.now(),
+            // Store a simple hash of password so we detect changes
+            pwHash: simpleHash(user.password),
+          };
+
+          localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+
+          // Success — redirect
+          btn.innerHTML = `<span class="spinner"></span>Welcome back!`;
+          setTimeout(() => {
+            window.location.replace(INDEX_PAGE);
+          }, 400);
+        } catch (err) {
+          console.error(err);
+          showError("Could not load user data. Try again.");
+          btn.disabled = false;
+          btn.textContent = "Log in";
+        }
+      }
+
+      function showError(msg) {
+        const el = document.getElementById("errorMsg");
+        el.textContent = "⚠️ " + msg;
+        el.classList.remove("visible");
+        // Force reflow for shake animation replay
+        void el.offsetWidth;
+        el.classList.add("visible");
+      }
+
+      /* Simple non-crypto hash — enough to detect password change */
+      function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = (hash << 5) - hash + str.charCodeAt(i);
+          hash |= 0;
+        }
+        return hash.toString(36);
+      }
+    </script>
+  </body>
+</html>
