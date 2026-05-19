@@ -100,12 +100,12 @@
       }
 
       /* Reset button */
-      button:last-of-type {
+      button.btn-reset {
         background: #1a1a1a;
         font-weight: 500;
       }
 
-      button:last-of-type:hover {
+      button.btn-reset:hover {
         background: #2a2a2a;
       }
 
@@ -115,6 +115,31 @@
         color: #555;
         padding: 8px 2px 10px;
         min-height: 30px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      /* ── PROGRESS BAR ── */
+      .progress-wrap {
+        flex: 1;
+        height: 2px;
+        background: #1a1a1a;
+        border-radius: 2px;
+        overflow: hidden;
+        display: none;
+      }
+
+      .progress-wrap.visible {
+        display: block;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background: #0095f6;
+        width: 0%;
+        transition: width 0.1s linear;
+        border-radius: 2px;
       }
 
       /* ── CHAT CONTAINER ── */
@@ -388,20 +413,16 @@
         .topbar {
           padding: 10px 12px 0;
         }
-
         .bubble {
           max-width: 82%;
           font-size: 14px;
         }
-
         .chat-container {
           padding: 8px 10px 16px;
         }
-
         .filters {
           gap: 6px;
         }
-
         input[type="date"] {
           width: 130px;
           font-size: 12px;
@@ -410,7 +431,6 @@
       }
 
       /* ── LOADER ── */
-
       #loader {
         position: fixed;
         inset: 0;
@@ -421,6 +441,7 @@
         justify-content: center;
         z-index: 999999;
         gap: 24px;
+        transition: opacity 0.3s ease;
       }
 
       .loader-logo {
@@ -434,11 +455,15 @@
           #962fbf,
           #4f5bd5
         );
-
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-
         letter-spacing: -1px;
+      }
+
+      .loader-status {
+        font-size: 13px;
+        color: #444;
+        letter-spacing: 0.2px;
       }
 
       .loader-spinner {
@@ -460,7 +485,6 @@
         input[type="date"] {
           display: none;
         }
-
         .bubble {
           max-width: 88%;
         }
@@ -470,65 +494,378 @@
   <body>
     <div class="topbar">
       <h1>Muthusee Chat Viewer</h1>
-
       <div class="filters">
         <input type="date" id="startDate" />
         <input type="date" id="endDate" />
-
         <input
           type="text"
           id="searchInput"
           class="searchBox"
           placeholder="Search messages..."
         />
-
         <button onclick="applyFilters()">Apply</button>
-        <button onclick="resetFilters()">Reset</button>
+        <button class="btn-reset" onclick="resetFilters()">Reset</button>
       </div>
-
-      <div class="info" id="info"></div>
+      <div class="info" id="info">
+        <span id="infoText"></span>
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+      </div>
     </div>
 
     <div class="chat-container" id="chatContainer"></div>
+
     <div id="loader">
       <div class="loader-logo">Muthusee</div>
-
       <div class="loader-spinner"></div>
+      <div class="loader-status" id="loaderStatus">Loading messages…</div>
     </div>
 
     <script>
       let allMessages = [];
-      let filteredMessages = [];
 
+      /* ─────────────────────────────────────────
+         LOAD
+      ───────────────────────────────────────── */
       async function loadChat() {
+        const loader = document.getElementById("loader");
+        const loaderStatus = document.getElementById("loaderStatus");
+
         try {
-          const response = await fetch("https://ik.imagekit.io/shadick/messages_minified.json");
-
+          loaderStatus.textContent = "Fetching data…";
+          const response = await fetch(
+            "https://ik.imagekit.io/shadick/messages_minified.json",
+          );
+          loaderStatus.textContent = "Parsing messages…";
           const data = await response.json();
-
           allMessages = data.messages;
 
-          updateInfo(allMessages);
+          // Hide loader, then render in background
+          loader.style.opacity = "0";
+          setTimeout(() => {
+            loader.style.display = "none";
+          }, 300);
 
-          renderMessages(allMessages);
+          updateInfoText(allMessages.length, allMessages.length, "");
+          await renderChunked(allMessages, true);
         } catch (err) {
           console.error(err);
-
-          document.getElementById("chatContainer").innerHTML = `
-            <div class="media">
-                Failed to load chat
-            </div>
-        `;
-        } finally {
-          // HIDE LOADER IMMEDIATELY
-          document.getElementById("loader").style.display = "none";
+          document.getElementById("chatContainer").innerHTML =
+            `<div class="media">Failed to load chat.<br><small>${err.message}</small></div>`;
+          loader.style.display = "none";
         }
       }
 
-      function formatDate(ts) {
-        const d = new Date(ts);
+      /* ─────────────────────────────────────────
+         CHUNKED RENDER  ← the key fix
+         Renders CHUNK_SIZE messages per animation
+         frame so the browser never freezes.
+      ───────────────────────────────────────── */
+      const CHUNK_SIZE = 60;
 
-        return d.toLocaleDateString(undefined, {
+      function renderChunked(messages, scrollToBottom = false) {
+        return new Promise((resolve) => {
+          const container = document.getElementById("chatContainer");
+          const progressWrap = document.getElementById("progressWrap");
+          const progressBar = document.getElementById("progressBar");
+
+          container.innerHTML = "";
+          progressWrap.classList.add("visible");
+          progressBar.style.width = "0%";
+
+          const total = messages.length;
+          let index = 0;
+          let lastDate = "";
+
+          if (total === 0) {
+            progressWrap.classList.remove("visible");
+            resolve();
+            return;
+          }
+
+          function processChunk() {
+            // Use a DocumentFragment — one DOM insertion per chunk
+            const frag = document.createDocumentFragment();
+            const end = Math.min(index + CHUNK_SIZE, total);
+
+            for (; index < end; index++) {
+              const msg = messages[index];
+              const currentDate = formatDate(msg.timestampUnix * 1000);
+
+              if (currentDate !== lastDate) {
+                const sep = document.createElement("div");
+                sep.className = "date-separator";
+                sep.textContent = currentDate;
+                frag.appendChild(sep);
+                lastDate = currentDate;
+              }
+
+              frag.appendChild(buildMessageRow(msg));
+            }
+
+            container.appendChild(frag);
+
+            // Update progress bar
+            const pct = Math.round((index / total) * 100);
+            progressBar.style.width = pct + "%";
+
+            if (index < total) {
+              // Yield to browser, continue next frame
+              requestAnimationFrame(processChunk);
+            } else {
+              // Done
+              progressWrap.classList.remove("visible");
+              if (scrollToBottom) container.scrollTop = container.scrollHeight;
+              resolve();
+            }
+          }
+
+          requestAnimationFrame(processChunk);
+        });
+      }
+
+      /* ─────────────────────────────────────────
+         BUILD A SINGLE MESSAGE ROW (DOM, no innerHTML loops)
+      ───────────────────────────────────────── */
+      function buildMessageRow(msg) {
+        const row = document.createElement("div");
+        row.className = `message-row ${msg.sender === "me" ? "me" : "other"}`;
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+
+        // REPLY
+        if (msg.replyTo) {
+          const reply = document.createElement("div");
+          reply.className = "reply";
+          const strong = document.createElement("strong");
+          strong.textContent = msg.replyTo.sender;
+          reply.appendChild(strong);
+          reply.appendChild(document.createTextNode(msg.replyTo.text || ""));
+          bubble.appendChild(reply);
+        }
+
+        // CONTENT
+        const content = buildContent(msg);
+        bubble.appendChild(content);
+
+        // REACTIONS
+        if (msg.reactions && msg.reactions.length) {
+          const reactions = document.createElement("div");
+          reactions.className = "reactions";
+          msg.reactions.forEach((r) => {
+            const span = document.createElement("span");
+            span.className = "reaction";
+            span.textContent = r.emoji;
+            reactions.appendChild(span);
+          });
+          bubble.appendChild(reactions);
+        }
+
+        // TIME
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = formatTime(msg.timestampUnix * 1000);
+        bubble.appendChild(meta);
+
+        row.appendChild(bubble);
+        return row;
+      }
+
+      /* ─────────────────────────────────────────
+         BUILD CONTENT BY TYPE
+      ───────────────────────────────────────── */
+      function buildContent(msg) {
+        const div = document.createElement("div");
+
+        if (msg.type === "text") {
+          const p = document.createElement("div");
+          p.textContent = msg.text || "";
+          div.appendChild(p);
+        } else if (msg.type === "media") {
+          if (msg.mediaUrl) {
+            const img = document.createElement("img");
+            img.src = msg.mediaUrl;
+            img.className = "chat-image";
+            img.loading = "lazy";
+            img.onclick = () => window.open(msg.mediaUrl, "_blank");
+            img.onerror = () => {
+              const fb = document.createElement("div");
+              fb.className = "media";
+              fb.textContent = "📷 Image expired";
+              img.replaceWith(fb);
+            };
+            div.appendChild(img);
+          } else {
+            div.appendChild(makeMedia("📷 Photo"));
+          }
+        } else if (msg.type === "sticker") {
+          if (msg.mediaUrl) {
+            const img = document.createElement("img");
+            img.src = msg.mediaUrl;
+            img.className = "sticker";
+            img.loading = "lazy";
+            img.onerror = () => {
+              const fb = document.createElement("div");
+              fb.className = "media";
+              fb.textContent = "😊 Sticker";
+              img.replaceWith(fb);
+            };
+            div.appendChild(img);
+          } else {
+            div.appendChild(makeMedia("😊 Sticker"));
+          }
+        } else if (msg.type === "reel_share") {
+          const m = makeMedia("🎬 Reel Shared");
+          if (msg.reelOwner) {
+            const s = document.createElement("small");
+            s.textContent = msg.reelOwner;
+            m.appendChild(s);
+          }
+          div.appendChild(m);
+        } else if (msg.type === "clip") {
+          const m = makeMedia("🎥 Clip Shared");
+          if (msg.clipCaption) {
+            const s = document.createElement("small");
+            s.textContent = msg.clipCaption;
+            m.appendChild(s);
+          }
+          div.appendChild(m);
+        } else if (msg.type === "voice_media") {
+          div.appendChild(buildVoicePlayer(msg));
+        } else if (msg.type === "video_call_event") {
+          const desc =
+            msg.rawData?.video_call_event?.description || "Call Event";
+          div.appendChild(makeMedia("📞 " + desc));
+        } else {
+          div.appendChild(makeMedia(msg.text || msg.type));
+        }
+
+        return div;
+      }
+
+      /* ─────────────────────────────────────────
+         VOICE PLAYER
+      ───────────────────────────────────────── */
+      function buildVoicePlayer(msg) {
+        const uid = "vm_" + Math.random().toString(36).slice(2, 8);
+        const match = (msg.text || "").match(/\((.*?)\)/);
+        const dur = match ? match[1] : "";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "voice-message";
+
+        const header = document.createElement("div");
+        header.className = "voice-header";
+        header.textContent = "🎤 Voice message";
+        wrapper.appendChild(header);
+
+        if (msg.mediaUrl) {
+          const player = document.createElement("div");
+          player.className = "audio-player";
+          player.id = "player_" + uid;
+
+          // Play button
+          const btn = document.createElement("button");
+          btn.className = "audio-play-btn";
+          btn.id = "btn_" + uid;
+          btn.setAttribute("aria-label", "Play");
+          btn.innerHTML = `
+            <svg class="icon-play" viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 10 12">
+              <rect x="0" y="0" width="3.5" height="12"/>
+              <rect x="6.5" y="0" width="3.5" height="12"/>
+            </svg>`;
+          player.appendChild(btn);
+
+          // Waveform
+          const wave = document.createElement("div");
+          wave.className = "audio-waveform";
+          wave.id = "wave_" + uid;
+          const barsEls = [];
+          for (let i = 0; i < 28; i++) {
+            const bar = document.createElement("div");
+            bar.className = "audio-bar";
+            const h = 20 + Math.round(Math.abs(Math.sin(i * 0.7 + 1.2) * 55));
+            bar.style.height = h + "%";
+            bar.dataset.bar = i;
+            wave.appendChild(bar);
+            barsEls.push(bar);
+          }
+          player.appendChild(wave);
+
+          // Time display
+          const timeEl = document.createElement("span");
+          timeEl.className = "audio-time";
+          timeEl.textContent = "0:00";
+          player.appendChild(timeEl);
+
+          // Audio element
+          const aud = document.createElement("audio");
+          aud.preload = "metadata";
+          const src = document.createElement("source");
+          src.src = msg.mediaUrl;
+          src.type = "audio/mp4";
+          aud.appendChild(src);
+          player.appendChild(aud);
+
+          wrapper.appendChild(player);
+
+          // Wire up events
+          const fmt = (s) => {
+            const m = Math.floor(s / 60),
+              sec = Math.floor(s % 60);
+            return `${m}:${sec.toString().padStart(2, "0")}`;
+          };
+
+          btn.addEventListener("click", () => {
+            aud.paused ? aud.play() : aud.pause();
+          });
+          aud.addEventListener("play", () => btn.classList.add("playing"));
+          aud.addEventListener("pause", () => btn.classList.remove("playing"));
+          aud.addEventListener("ended", () => {
+            btn.classList.remove("playing");
+            barsEls.forEach((b) => b.classList.remove("played"));
+            timeEl.textContent = "0:00";
+          });
+          aud.addEventListener("timeupdate", () => {
+            const pct = aud.duration ? aud.currentTime / aud.duration : 0;
+            const filled = Math.round(pct * barsEls.length);
+            barsEls.forEach((b, i) => b.classList.toggle("played", i < filled));
+            timeEl.textContent = fmt(aud.currentTime);
+          });
+          wave.addEventListener("click", (e) => {
+            const rect = wave.getBoundingClientRect();
+            const pct = (e.clientX - rect.left) / rect.width;
+            if (aud.duration) aud.currentTime = pct * aud.duration;
+          });
+        } else {
+          wrapper.appendChild(makeMedia("🎤 Voice message"));
+        }
+
+        if (dur) {
+          const durEl = document.createElement("div");
+          durEl.className = "voice-duration";
+          durEl.textContent = dur;
+          wrapper.appendChild(durEl);
+        }
+
+        return wrapper;
+      }
+
+      /* ─────────────────────────────────────────
+         HELPERS
+      ───────────────────────────────────────── */
+      function makeMedia(text) {
+        const div = document.createElement("div");
+        div.className = "media";
+        div.textContent = text;
+        return div;
+      }
+
+      function formatDate(ts) {
+        return new Date(ts).toLocaleDateString(undefined, {
           weekday: "long",
           year: "numeric",
           month: "long",
@@ -537,355 +874,72 @@
       }
 
       function formatTime(ts) {
-        const d = new Date(ts);
-
-        return d.toLocaleTimeString([], {
+        return new Date(ts).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         });
       }
 
-      function renderMessages(messages) {
-        const container = document.getElementById("chatContainer");
-        container.innerHTML = "";
-
-        let lastDate = "";
-
-        messages.forEach((msg) => {
-          const currentDate = formatDate(msg.timestampUnix * 1000);
-
-          if (currentDate !== lastDate) {
-            const sep = document.createElement("div");
-            sep.className = "date-separator";
-            sep.innerText = currentDate;
-
-            container.appendChild(sep);
-
-            lastDate = currentDate;
-          }
-
-          const row = document.createElement("div");
-
-          row.className = `message-row ${msg.sender === "me" ? "me" : "other"}`;
-
-          const bubble = document.createElement("div");
-          bubble.className = "bubble";
-
-          // REPLY
-          if (msg.replyTo) {
-            const reply = document.createElement("div");
-            reply.className = "reply";
-
-            reply.innerHTML = `
-                <strong>${msg.replyTo.sender}</strong><br>
-                ${escapeHtml(msg.replyTo.text || "")}
-            `;
-
-            bubble.appendChild(reply);
-          }
-
-          const content = document.createElement("div");
-
-          // TEXT
-          if (msg.type === "text") {
-            content.innerHTML = `
-                <div>${escapeHtml(msg.text || "")}</div>
-            `;
-          }
-
-          // IMAGE
-          else if (msg.type === "media") {
-            if (msg.mediaUrl) {
-              content.innerHTML = `
-                    <img 
-                        src="${msg.mediaUrl}" 
-                        class="chat-image"
-                        onclick="window.open('${msg.mediaUrl}','_blank')"
-                        onerror="this.parentElement.innerHTML='<div class=media>📷 Image expired</div>'"
-                    >
-                `;
-            } else {
-              content.innerHTML = `
-                    <div class="media">📷 Photo</div>
-                `;
-            }
-          }
-
-          // STICKER
-          else if (msg.type === "sticker") {
-            if (msg.mediaUrl) {
-              content.innerHTML = `
-                    <img 
-                        src="${msg.mediaUrl}" 
-                        class="sticker"
-                        onerror="this.parentElement.innerHTML='<div class=media>😊 Sticker</div>'"
-                    >
-                `;
-            } else {
-              content.innerHTML = `
-                    <div class="media">😊 Sticker</div>
-                `;
-            }
-          }
-
-          // REEL
-          else if (msg.type === "reel_share") {
-            content.innerHTML = `
-                <div class="media">
-                    🎬 Reel Shared
-                    <br><br>
-                    <small>${msg.reelOwner || ""}</small>
-                </div>
-            `;
-          }
-
-          // CLIP
-          else if (msg.type === "clip") {
-            content.innerHTML = `
-                <div class="media">
-                    🎥 Clip Shared
-                    <br><br>
-                    <small>${escapeHtml(msg.clipCaption || "")}</small>
-                </div>
-            `;
-          }
-
-          // VOICE MESSAGE
-          else if (msg.type === "voice_media") {
-            const uid = "vm_" + Math.random().toString(36).slice(2, 8);
-            let dur = "";
-            const match = (msg.text || "").match(/\((.*?)\)/);
-            if (match) dur = match[1];
-
-            const bars = Array.from({ length: 28 }, (_, i) => {
-              const h = 20 + Math.round(Math.abs(Math.sin(i * 0.7 + 1.2) * 55));
-              return `<div class="audio-bar" style="height:${h}%" data-bar="${i}"></div>`;
-            }).join("");
-
-            content.innerHTML = `
-    <div class="voice-message">
-      <div class="voice-header">🎤 Voice message</div>
-      ${
-        msg.mediaUrl
-          ? `
-        <div class="audio-player" id="player_${uid}">
-          <button class="audio-play-btn" id="btn_${uid}" aria-label="Play">
-            <svg class="icon-play" viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z"/></svg>
-            <svg class="icon-pause" viewBox="0 0 10 12"><rect x="0" y="0" width="3.5" height="12"/><rect x="6.5" y="0" width="3.5" height="12"/></svg>
-          </button>
-          <div class="audio-waveform" id="wave_${uid}">${bars}</div>
-          <span class="audio-time" id="time_${uid}">0:00</span>
-          <audio id="aud_${uid}" preload="metadata">
-            <source src="${msg.mediaUrl}" type="audio/mp4">
-          </audio>
-        </div>
-      `
-          : `<div class="media">🎤 Voice message</div>`
-      }
-      <div class="voice-duration">${dur}</div>
-    </div>
-  `;
-
-            if (msg.mediaUrl) {
-              const aud = content.querySelector(`#aud_${uid}`);
-              const btn = content.querySelector(`#btn_${uid}`);
-              const waveEl = content.querySelector(`#wave_${uid}`);
-              const timeEl = content.querySelector(`#time_${uid}`);
-              const barsEls = waveEl.querySelectorAll(".audio-bar");
-              const total = barsEls.length;
-
-              const fmt = (s) => {
-                const m = Math.floor(s / 60),
-                  sec = Math.floor(s % 60);
-                return `${m}:${sec.toString().padStart(2, "0")}`;
-              };
-
-              btn.addEventListener("click", () => {
-                aud.paused ? aud.play() : aud.pause();
-              });
-
-              aud.addEventListener("play", () => btn.classList.add("playing"));
-              aud.addEventListener("pause", () =>
-                btn.classList.remove("playing"),
-              );
-              aud.addEventListener("ended", () => {
-                btn.classList.remove("playing");
-                barsEls.forEach((b) => b.classList.remove("played"));
-                timeEl.textContent = "0:00";
-              });
-
-              aud.addEventListener("timeupdate", () => {
-                const pct = aud.duration ? aud.currentTime / aud.duration : 0;
-                const filled = Math.round(pct * total);
-                barsEls.forEach((b, i) =>
-                  b.classList.toggle("played", i < filled),
-                );
-                timeEl.textContent = fmt(aud.currentTime);
-              });
-
-              waveEl.addEventListener("click", (e) => {
-                const rect = waveEl.getBoundingClientRect();
-                const pct = (e.clientX - rect.left) / rect.width;
-                if (aud.duration) aud.currentTime = pct * aud.duration;
-              });
-            }
-          }
-
-          // CALL
-          else if (msg.type === "video_call_event") {
-            content.innerHTML = `
-                <div class="media">
-                    📞 ${
-                      msg.rawData?.video_call_event?.description || "Call Event"
-                    }
-                </div>
-            `;
-          }
-
-          // FALLBACK
-          else {
-            content.innerHTML = `
-                <div class="media">
-                    ${escapeHtml(msg.text || msg.type)}
-                </div>
-            `;
-          }
-
-          bubble.appendChild(content);
-
-          // REACTIONS
-          if (msg.reactions && msg.reactions.length) {
-            const reactions = document.createElement("div");
-            reactions.className = "reactions";
-
-            reactions.innerHTML = msg.reactions
-              .map(
-                (r) => `
-                    <span class="reaction">
-                        ${r.emoji}
-                    </span>
-                `,
-              )
-              .join("");
-
-            bubble.appendChild(reactions);
-          }
-
-          // TIME
-          const meta = document.createElement("div");
-          meta.className = "meta";
-
-          meta.innerText = formatTime(msg.timestampUnix * 1000);
-
-          bubble.appendChild(meta);
-
-          row.appendChild(bubble);
-
-          container.appendChild(row);
-        });
-
-        container.scrollTop = container.scrollHeight;
-      }
-
-      function updateInfo(messages) {
-        const total = allMessages.length;
-        const filtered = messages.length;
-
-        const search = document.getElementById("searchInput").value.trim();
-
-        let text = "";
-
-        // SEARCH ACTIVE
+      function updateInfoText(shown, total, search) {
+        const el = document.getElementById("infoText");
         if (search) {
-          text = `
-            Showing ${filtered.toLocaleString()} results
-            for "${search}"
-            • Total ${total.toLocaleString()} messages
-        `;
+          el.textContent = `Showing ${shown.toLocaleString()} results for "${search}" • Total ${total.toLocaleString()} messages`;
+        } else if (shown !== total) {
+          el.textContent = `Showing ${shown.toLocaleString()} of ${total.toLocaleString()} messages`;
+        } else {
+          el.textContent = `${total.toLocaleString()} messages`;
         }
-
-        // FILTER ACTIVE
-        else if (filtered !== total) {
-          text = `
-            Showing ${filtered.toLocaleString()}
-            of ${total.toLocaleString()} messages
-        `;
-        }
-
-        // DEFAULT
-        else {
-          text = `
-            ${total.toLocaleString()} messages
-        `;
-        }
-
-        document.getElementById("info").innerText = text
-          .replace(/\s+/g, " ")
-          .trim();
       }
 
+      /* ─────────────────────────────────────────
+         FILTERS
+      ───────────────────────────────────────── */
       function applyFilters() {
         const start = document.getElementById("startDate").value;
         const end = document.getElementById("endDate").value;
-
         const search = document
           .getElementById("searchInput")
-          .value.toLowerCase();
+          .value.toLowerCase()
+          .trim();
 
-        filteredMessages = allMessages.filter((msg) => {
+        const filtered = allMessages.filter((msg) => {
           const msgDate = new Date(msg.timestampUnix * 1000);
-
           let valid = true;
 
-          // START DATE
-          if (start) {
-            const startDate = new Date(start + "T00:00:00");
+          if (start) valid = valid && msgDate >= new Date(start + "T00:00:00");
+          if (end) valid = valid && msgDate <= new Date(end + "T23:59:59");
 
-            valid = valid && msgDate >= startDate;
-          }
-
-          // END DATE
-          if (end) {
-            const endDate = new Date(end + "T23:59:59");
-
-            valid = valid && msgDate <= endDate;
-          }
-
-          // SEARCH
           if (search) {
-            const searchableText = `
-                ${msg.text || ""}
-                ${msg.clipCaption || ""}
-                ${msg.reelOwner || ""}
-                ${msg.type || ""}
-            `.toLowerCase();
-
-            valid = valid && searchableText.includes(search);
+            const haystack = [
+              msg.text,
+              msg.clipCaption,
+              msg.reelOwner,
+              msg.type,
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+            valid = valid && haystack.includes(search);
           }
 
           return valid;
         });
 
-        renderMessages(filteredMessages);
-        updateInfo(filteredMessages);
+        updateInfoText(filtered.length, allMessages.length, search);
+        renderChunked(filtered, true);
       }
 
       function resetFilters() {
         document.getElementById("startDate").value = "";
         document.getElementById("endDate").value = "";
         document.getElementById("searchInput").value = "";
-
-        renderMessages(allMessages);
-        updateInfo(allMessages);
+        updateInfoText(allMessages.length, allMessages.length, "");
+        renderChunked(allMessages, true);
       }
 
-      function escapeHtml(text) {
-        return text
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
-      }
-
+      /* ─────────────────────────────────────────
+         KICK OFF
+      ───────────────────────────────────────── */
       loadChat();
     </script>
   </body>
