@@ -781,7 +781,7 @@
           );
           loaderStatus.textContent = "Parsing messages…";
           const data = await response.json();
-          allMessages = data.messages;
+          allMessages = data.messages.slice(0,120);
 
           // Hide loader, then render in background
           loader.style.opacity = "0";
